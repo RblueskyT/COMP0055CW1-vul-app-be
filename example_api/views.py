@@ -27,7 +27,7 @@ def post_demo(request):
     # No duplication
     try:
         user = ExampleModel.objects.get(username = data_username)
-        return HttpResponse("Sorry, the username '%s' has already been registered." % user.username)
+        return HttpResponse("Welcome back '%s' has already been registered." % user.username)
     except ExampleModel.DoesNotExist:
         # Write the data to the database
         data_time_created = timezone.now()
