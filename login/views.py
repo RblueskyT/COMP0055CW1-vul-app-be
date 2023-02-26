@@ -156,7 +156,7 @@ def twitter_login(request):
 @require_http_methods(['POST'])
 @csrf_exempt
 def tweet(request):
-    try:
+    try: 
         data = json.loads(request.body)
         text = data.get("text")
         accessToken = data.get("token")
