@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, Http404 # JsonResponse and HttpResponseRedirect may be used in other APIs
+from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from .models import User
+from django.contrib.auth.models import User
+# from .models import User
 import json
 import requests
 import base64
@@ -14,6 +16,39 @@ CLIENT_SECRET = 'ae2f1ce01433b0e49f33ba35c2a13a4f3a83abc8'
 
 TWITTER_CLIENT_ID = 'UGxoMHJDc0JFcWNvMzkxeDZjMEk6MTpjaQ'
 TWITTER_CLIENT_SECRET = 'sE1SZ6JRbu0694bhjSVZGdwPgZLD-V_FLoSu3-Zt-13h0MCIqD'
+
+# User login with account and password
+@require_http_methods(['POST'])
+@csrf_exempt
+def account_login(request):
+    username = json.loads(request.body).get("username")
+    password = json.loads(request.body).get("password")
+    user = authenticate(request, username=username, password=password)
+    if user is not None:
+        login(request, user)
+        return JsonResponse({"code": 200, "msg": "authentication succeeded"})
+    else:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    
+# User logout
+@require_http_methods(['GET'])
+def user_logout(request):
+    logout(request)
+    return HttpResponse("Successfully logged out")
+
+# Check if the user is authenticated
+@require_http_methods(['POST'])
+@csrf_exempt
+def check_user_status(request):
+    username = json.loads(request.body).get("username")
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        raise Http404("Unknown Error")
+    if not user.is_authenticated:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if user.is_authenticated:
+        return JsonResponse({"code": 200, "msg": "authentication succeeded"})
 
 # Create your views here.
 @require_http_methods(['GET'])

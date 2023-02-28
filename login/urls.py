@@ -4,6 +4,12 @@ from . import views
 urlpatterns = [
     # /login/
     path('', views.index, name='index'),
+    # /login/account_login/
+    path('account_login', views.account_login, name='account_login'),
+    # /login/user_logout
+    path('user_logout', views.user_logout, name='user_logout'),
+    # /login/check_user_status/
+    path('check_user_status', views.check_user_status, name='check_user_status'),
     # /login/github_login/
     path('github_login', views.github_login, name='github_login'),
     # /login/twitter_login/
