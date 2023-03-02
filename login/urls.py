@@ -6,6 +6,10 @@ urlpatterns = [
     path('', views.index, name='index'),
     # /login/account_login/
     path('account_login', views.account_login, name='account_login'),
+    # /login/github_client_flow_redeem/
+    path('github_client_flow_redeem', views.github_client_flow_redeem, name='github_client_flow_redeem'),
+    # /login/github_client_flow_login/
+    path('github_client_flow_login', views.github_client_flow_login, name='github_client_flow_login'),
     # /login/user_logout
     path('user_logout', views.user_logout, name='user_logout'),
     # /login/check_user_status/

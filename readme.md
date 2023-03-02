@@ -2,7 +2,6 @@
 
 Group 7 Vulnerable Application Back End
 Learn Django: https://www.djangoproject.com/
-Learn Django OAuth Toolkit: https://django-oauth-toolkit.readthedocs.io/en/latest/
 
 ## Project setup
 ```

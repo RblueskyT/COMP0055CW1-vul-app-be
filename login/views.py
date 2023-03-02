@@ -49,6 +49,55 @@ def check_user_status(request):
         return JsonResponse({"code": 403, "msg": "authentication failed"})
     if user.is_authenticated:
         return JsonResponse({"code": 200, "msg": "authentication succeeded"})
+    
+# Github login - redeem access token (client-flow)
+@require_http_methods(['POST'])
+@csrf_exempt
+def github_client_flow_redeem(request):
+    redeem_code = json.loads(request.body).get("code")
+    gcfc_id = 'd83ac1ef7822f3087e4b'
+    gcfc_secret = '8454a2f1e906f4816457d10ba1c662302db59491'
+    data = {
+        "client_id": gcfc_id,
+        "client_secret": gcfc_secret,
+        "code": redeem_code,
+    }
+    response = requests.post('https://github.com/login/oauth/access_token', data)
+    if response.status_code != 200:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    else:
+        return JsonResponse({"code": 200, "github_response": response.text})
+    
+# Github login - user login (client-flow)
+@require_http_methods(['POST'])
+@csrf_exempt
+def github_client_flow_login(request):
+    access_token = json.loads(request.body).get("access_token")
+    response = requests.get('https://api.github.com/user',headers={'Authorization':'Bearer '+access_token})
+    if response.status_code != 200:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    else:
+        res_data = response.json()
+        username = res_data['login'] + '(GitHub)'
+        password = access_token
+        try:
+            user = User.objects.get(username=username)
+            user.set_password(password)
+            user.save()
+            auth_user = authenticate(request, username=username, password=password)
+            if auth_user is not None:
+                login(request, auth_user)
+                return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username})
+            else:
+                return JsonResponse({"code": 403, "msg": "authentication failed"})
+        except User.DoesNotExist:
+            newUser = User.objects.create_user(username, '', password)
+            auth_new_user = authenticate(request, username=username, password=password)
+            if auth_new_user is not None:
+                login(request, auth_new_user)
+                return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
+            else:
+                return JsonResponse({"code": 403, "msg": "authentication failed"})
 
 # Create your views here.
 @require_http_methods(['GET'])
