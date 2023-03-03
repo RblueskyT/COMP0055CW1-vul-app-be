@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from .models import Balance
 from .models import BalanceRecord
+from .models import Post
 import json
 import requests
 
@@ -68,6 +69,39 @@ def account_transfer(request):
         new_balnce_record_one = BalanceRecord.objects.create(username = src_username, balance_change = -1*amount, change_reason = reason, change_date = timezone.now(), balance = userBalanceOne)
         new_balnce_record_two = BalanceRecord.objects.create(username = dst_username, balance_change = amount, change_reason = reason, change_date = timezone.now(), balance = userBalanceTwo)
         return JsonResponse({"code": 200, "msg": "Transfer Succeeded"})
+    
+# Get all posts
+@require_http_methods(['POST'])
+@csrf_exempt
+def get_posts(request):
+    username = json.loads(request.body).get("username")
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if not user.is_authenticated:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if user.is_authenticated:
+        posts = Post.objects.all().values()
+        postsList = [record for record in posts]
+        return JsonResponse({"code": 200, "posts": postsList})
+    
+# Add a post
+@require_http_methods(['POST'])
+@csrf_exempt
+def add_post(request):
+    username = json.loads(request.body).get("username")
+    post_title = json.loads(request.body).get("post_title")
+    post_content = json.loads(request.body).get("post_content")
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if not user.is_authenticated:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if user.is_authenticated:
+        new_post = Post.objects.create(username = username, post_title = post_title, post_content = post_content, post_date = timezone.now())
+        return JsonResponse({"code": 200, "msg": "Post Creation Succeeded"})
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
