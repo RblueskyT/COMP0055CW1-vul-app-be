@@ -5,7 +5,8 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.contrib.auth.models import User
-# from .models import User
+from dashboard.models import Balance
+from dashboard.models import BalanceRecord
 import json
 import requests
 import base64
@@ -94,6 +95,8 @@ def github_client_flow_login(request):
             newUser = User.objects.create_user(username, '', password)
             auth_new_user = authenticate(request, username=username, password=password)
             if auth_new_user is not None:
+                new_balance = Balance.objects.create(username = username, current_balance = 150)
+                new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
                 login(request, auth_new_user)
                 return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
             else:
@@ -147,6 +150,8 @@ def github_server_flow_redeem_and_login(request):
                 newUser = User.objects.create_user(username, '', password)
                 auth_new_user = authenticate(request, username=username, password=password)
                 if auth_new_user is not None:
+                    new_balance = Balance.objects.create(username = username, current_balance = 150)
+                    new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
                     login(request, auth_new_user)
                     return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
                 else:
@@ -212,6 +217,8 @@ def twitter_server_flow_redeem_and_login(request):
                 newUser = User.objects.create_user(username, '', password)
                 auth_new_user = authenticate(request, username=username, password=password)
                 if auth_new_user is not None:
+                    new_balance = Balance.objects.create(username = username, current_balance = 150)
+                    new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
                     login(request, auth_new_user)
                     return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
                 else:
