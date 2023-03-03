@@ -98,6 +98,59 @@ def github_client_flow_login(request):
                 return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
             else:
                 return JsonResponse({"code": 403, "msg": "authentication failed"})
+            
+# Github login - return info (server flow)
+@require_http_methods(['GET'])
+def github_server_flow_info(request):
+    client_id = 'd83ac1ef7822f3087e4b'
+    redirect_uri = 'http://localhost:8080/login'
+    scope = 'user'
+    return JsonResponse({"code": 200, "client_id": client_id, "redirect_uri": redirect_uri, "scope": scope})
+
+# Github login - redeem access token and user login (client-flow)
+@require_http_methods(['POST'])
+@csrf_exempt
+def github_server_flow_redeem_and_login(request):
+    redeem_code = json.loads(request.body).get("code")
+    gsfc_id = 'd83ac1ef7822f3087e4b'
+    gsfc_secret = '8454a2f1e906f4816457d10ba1c662302db59491'
+    data = {
+        "client_id": gsfc_id,
+        "client_secret": gsfc_secret,
+        "code": redeem_code,
+    }
+    response = requests.post('https://github.com/login/oauth/access_token', data)
+    if response.status_code != 200:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    elif 'bad_verification_code' in response.text:
+        return JsonResponse({"code": 404, "msg": "bad verification code"})
+    else:
+        access_token = response.text.split('&')[0].split('=')[1]
+        githubResponse = requests.get('https://api.github.com/user',headers={'Authorization':'Bearer '+access_token})
+        if githubResponse.status_code != 200:
+            return JsonResponse({"code": 403, "msg": "authentication failed"})
+        else:
+            res_data = githubResponse.json()
+            username = res_data['login'] + '(GitHub)'
+            password = access_token
+            try:
+                user = User.objects.get(username=username)
+                user.set_password(password)
+                user.save()
+                auth_user = authenticate(request, username=username, password=password)
+                if auth_user is not None:
+                    login(request, auth_user)
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username})
+                else:
+                    return JsonResponse({"code": 403, "msg": "authentication failed"})
+            except User.DoesNotExist:
+                newUser = User.objects.create_user(username, '', password)
+                auth_new_user = authenticate(request, username=username, password=password)
+                if auth_new_user is not None:
+                    login(request, auth_new_user)
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
+                else:
+                    return JsonResponse({"code": 403, "msg": "authentication failed"})
 
 # Create your views here.
 @require_http_methods(['GET'])
