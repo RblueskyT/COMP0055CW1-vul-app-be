@@ -99,7 +99,7 @@ def github_client_flow_login(request):
             else:
                 return JsonResponse({"code": 403, "msg": "authentication failed"})
             
-# Github login - return info (server flow)
+# Github login - return info (server-flow)
 @require_http_methods(['GET'])
 def github_server_flow_info(request):
     client_id = 'd83ac1ef7822f3087e4b'
@@ -107,7 +107,7 @@ def github_server_flow_info(request):
     scope = 'user'
     return JsonResponse({"code": 200, "client_id": client_id, "redirect_uri": redirect_uri, "scope": scope})
 
-# Github login - redeem access token and user login (client-flow)
+# Github login - redeem access token and user login (server-flow)
 @require_http_methods(['POST'])
 @csrf_exempt
 def github_server_flow_redeem_and_login(request):
@@ -132,6 +132,71 @@ def github_server_flow_redeem_and_login(request):
         else:
             res_data = githubResponse.json()
             username = res_data['login'] + '(GitHub)'
+            password = access_token
+            try:
+                user = User.objects.get(username=username)
+                user.set_password(password)
+                user.save()
+                auth_user = authenticate(request, username=username, password=password)
+                if auth_user is not None:
+                    login(request, auth_user)
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username})
+                else:
+                    return JsonResponse({"code": 403, "msg": "authentication failed"})
+            except User.DoesNotExist:
+                newUser = User.objects.create_user(username, '', password)
+                auth_new_user = authenticate(request, username=username, password=password)
+                if auth_new_user is not None:
+                    login(request, auth_new_user)
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
+                else:
+                    return JsonResponse({"code": 403, "msg": "authentication failed"})
+                
+# Twitter login - return info (server-flow)
+@require_http_methods(['GET'])
+def twitter_server_flow_info(request):
+    options = {
+        "response_type": 'code',
+        "client_id": 'UGxoMHJDc0JFcWNvMzkxeDZjMEk6MTpjaQ',
+        "redirect_uri": 'http://localhost:8080/login',
+        "state": 'state',
+        "code_challenge": 'challenge',
+        "code_challenge_method": 'plain',
+        "scope": ' '.join(['users.read','tweet.write', 'tweet.read', 'follows.read', 'follows.write'])
+    }
+    return JsonResponse({"code": 200, "options": options})
+
+# Twitter login - redeem access token and user login (server-flow)
+@require_http_methods(['POST'])
+@csrf_exempt
+def twitter_server_flow_redeem_and_login(request):
+    redeem_code = json.loads(request.body).get("code")
+    tsfc_id = 'UGxoMHJDc0JFcWNvMzkxeDZjMEk6MTpjaQ'
+    tsfc_secret = 'sE1SZ6JRbu0694bhjSVZGdwPgZLD-V_FLoSu3-Zt-13h0MCIqD'
+    ba_token_raw = f'{tsfc_id}:{tsfc_secret}'
+    ba_token_bytes = ba_token_raw.encode('utf-8')
+    ba_token_base64 = base64.b64encode(ba_token_bytes)
+    ba_token = ba_token_base64.decode('utf-8')
+
+    data = {
+        "client_id": urllib.parse.quote(tsfc_id),
+        "code_verifier": urllib.parse.quote('challenge'),
+        "redirect_uri": 'http://localhost:8080/login' ,
+        "grant_type": urllib.parse.quote('authorization_code'),
+        "code": urllib.parse.quote(redeem_code),
+    }
+    response = requests.post('https://api.twitter.com/2/oauth2/token', data, headers = {'Authorization':'Basic ' + ba_token, 'Content-Type': 'application/x-www-form-urlencoded'})
+    if response.status_code != 200:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    else:
+        resData = response.json()
+        access_token = resData["access_token"]
+        userInfoRes = requests.get('https://api.twitter.com/2/users/me', headers={'Authorization':'Bearer ' + access_token,"Content-Type": "application/json"})
+        if response.status_code != 200:
+            return JsonResponse({"code": 403, "msg": "authentication failed"})
+        else:
+            userInfo = userInfoRes.json()
+            username = userInfo['data']['username'] + '(Twitter)'
             password = access_token
             try:
                 user = User.objects.get(username=username)

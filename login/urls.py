@@ -14,6 +14,10 @@ urlpatterns = [
     path('github_server_flow_info', views.github_server_flow_info, name='github_server_flow_info'),
     # /login/github_server_flow_redeem_and_login/
     path('github_server_flow_redeem_and_login', views.github_server_flow_redeem_and_login, name='github_server_flow_redeem_and_login'),
+    # /login/twitter_server_flow_info/
+    path('twitter_server_flow_info', views.twitter_server_flow_info, name='twitter_server_flow_info'),
+    # /login/twitter_server_flow_redeem_and_login/
+    path('twitter_server_flow_redeem_and_login', views.twitter_server_flow_redeem_and_login, name='twitter_server_flow_redeem_and_login'),
     # /login/user_logout
     path('user_logout', views.user_logout, name='user_logout'),
     # /login/check_user_status/
