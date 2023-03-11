@@ -143,7 +143,7 @@ def github_server_flow_redeem_and_login(request):
                 auth_user = authenticate(request, username=username, password=password)
                 if auth_user is not None:
                     login(request, auth_user)
-                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username})
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username, "token": access_token})
                 else:
                     return JsonResponse({"code": 403, "msg": "authentication failed"})
             except User.DoesNotExist:
@@ -153,7 +153,7 @@ def github_server_flow_redeem_and_login(request):
                     new_balance = Balance.objects.create(username = username, current_balance = 150)
                     new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
                     login(request, auth_new_user)
-                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username, "token": access_token})
                 else:
                     return JsonResponse({"code": 403, "msg": "authentication failed"})
                 
@@ -210,7 +210,7 @@ def twitter_server_flow_redeem_and_login(request):
                 auth_user = authenticate(request, username=username, password=password)
                 if auth_user is not None:
                     login(request, auth_user)
-                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username})
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username, "token": access_token})
                 else:
                     return JsonResponse({"code": 403, "msg": "authentication failed"})
             except User.DoesNotExist:
@@ -220,7 +220,7 @@ def twitter_server_flow_redeem_and_login(request):
                     new_balance = Balance.objects.create(username = username, current_balance = 150)
                     new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
                     login(request, auth_new_user)
-                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username})
+                    return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username, "token": access_token})
                 else:
                     return JsonResponse({"code": 403, "msg": "authentication failed"})
 
