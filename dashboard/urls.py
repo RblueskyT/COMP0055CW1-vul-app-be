@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # /dashboard/tweet/
+    path('tweet', views.tweet, name='tweet'),
     # /dashboard/get_user_balance/
     path('get_user_balance', views.get_user_balance, name='get_user_balance'),
     # /dashboard/get_user_balance_records/
@@ -12,6 +14,4 @@ urlpatterns = [
     path('get_posts', views.get_posts, name='get_posts'),
     # /dashboard/add_post/
     path('add_post', views.add_post, name='add_post'),
-    # /dashboard/
-    path('', views.index, name='index'),
 ] 

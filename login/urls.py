@@ -20,5 +20,4 @@ urlpatterns = [
     path('user_logout', views.user_logout, name='user_logout'),
     # /login/check_user_status/
     path('check_user_status', views.check_user_status, name='check_user_status'),
-    path('tweet', views.tweet, name='tweet'),
 ] 

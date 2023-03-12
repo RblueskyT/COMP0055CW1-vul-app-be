@@ -1,15 +1,36 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, Http404 # JsonResponse and HttpResponseRedirect may be used in other APIs
-from django.contrib.auth import authenticate, login, logout
+from django.http import HttpResponse, JsonResponse, Http404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.contrib.auth.models import User
+from login.models import UserStatus
 from .models import Balance
 from .models import BalanceRecord
 from .models import Post
 import json
 import requests
+
+@require_http_methods(['POST'])
+@csrf_exempt
+def tweet(request):
+    username = json.loads(request.body).get("username")
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        raise Http404("Unknown Error")
+    userState = UserStatus.objects.get(username=username)
+    if not userState.isLoggedIn:
+        return JsonResponse({"code": 403, "msg": "authentication failed"})
+    if userState.isLoggedIn:
+        text = json.loads(request.body).get("text")
+        accessToken = data.get("token")
+        data = { "text": text }
+        res = requests.post('https://api.twitter.com/2/tweets',json=data,headers={'Authorization':'Bearer '+accessToken,"Content-Type": "application/json"})
+        if res.status_code == 201:
+            return HttpResponse("your tweet is submitted successfully")
+        elif res.status_code == 403:
+            return HttpResponse("Wrong token or expired , please try to login again",status=403)
+        return HttpResponse("Something went wrong , please try to login again",status=404)
 
 # Get the balance of a user
 @require_http_methods(['POST'])
@@ -20,9 +41,10 @@ def get_user_balance(request):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         raise Http404("Unknown Error")
-    if not user.is_authenticated:
+    userState = UserStatus.objects.get(username=username)
+    if not userState.isLoggedIn:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if user.is_authenticated:
+    if userState.isLoggedIn:
         userBalance = Balance.objects.get(username=username)
         return JsonResponse({"code": 200, "balance": userBalance.current_balance})
     
@@ -35,9 +57,10 @@ def get_user_balance_records(request):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         raise Http404("Unknown Error")
-    if not user.is_authenticated:
+    userState = UserStatus.objects.get(username=username)
+    if not userState.isLoggedIn:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if user.is_authenticated:
+    if userState.isLoggedIn:
         userBalanceRecords = BalanceRecord.objects.filter(username=username).values()
         userBalanceRecordsList = [record for record in userBalanceRecords]
         return JsonResponse({"code": 200, "balance_records": userBalanceRecordsList})
@@ -55,9 +78,10 @@ def account_transfer(request):
         dst_user = User.objects.get(username=dst_username)
     except User.DoesNotExist:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if not src_user.is_authenticated:
+    src_userState = UserStatus.objects.get(username=src_username)
+    if not src_userState.isLoggedIn:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if src_user.is_authenticated:
+    if src_userState.isLoggedIn:
         userBalanceOne = Balance.objects.get(username=src_username)
         userBalanceTwo = Balance.objects.get(username=dst_username)
         newBalanceOne = userBalanceOne.current_balance - amount
@@ -79,9 +103,10 @@ def get_posts(request):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if not user.is_authenticated:
+    userState = UserStatus.objects.get(username=username)
+    if not userState.isLoggedIn:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if user.is_authenticated:
+    if userState.isLoggedIn:
         posts = Post.objects.all().values()
         postsList = [record for record in posts]
         return JsonResponse({"code": 200, "posts": postsList})
@@ -97,11 +122,9 @@ def add_post(request):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if not user.is_authenticated:
+    userState = UserStatus.objects.get(username=username)
+    if not userState.isLoggedIn:
         return JsonResponse({"code": 403, "msg": "authentication failed"})
-    if user.is_authenticated:
+    if userState.isLoggedIn:
         new_post = Post.objects.create(username = username, post_title = post_title, post_content = post_content, post_date = timezone.now())
         return JsonResponse({"code": 200, "msg": "Post Creation Succeeded"})
-
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")

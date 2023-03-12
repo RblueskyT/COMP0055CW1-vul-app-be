@@ -241,30 +241,3 @@ def user_logout(request):
         return HttpResponse("Successfully logged out")
     except User.DoesNotExist:
         raise Http404("Unknown Error")
-
-@require_http_methods(['POST'])
-@csrf_exempt
-def tweet(request):
-    try: 
-        data = json.loads(request.body)
-        text = data.get("text")
-        accessToken = data.get("token")
-    except:
-        raise Http404("you need to provide text and accessToken in your post request")
-
-    data = {
-        "text":text
-    }
-    # print(data)
-    # print(accessToken)
-    
-    res = requests.post(
-        'https://api.twitter.com/2/tweets',json=data,headers={'Authorization':'Bearer '+accessToken,"Content-Type": "application/json"}
-    )
-    print(res.status_code,res.text)
-    if res.status_code == 201:
-        return HttpResponse("your tweet is submitted successfully")
-    elif res.status_code == 403:
-        return HttpResponse("Wrong token or expired , please try to login again",status=403)
-
-    return HttpResponse("Something went wrong , please try to login again",status=404)
