@@ -230,6 +230,7 @@ def twitter_server_flow_redeem_and_login(request):
                 
 # User logout
 @require_http_methods(['POST'])
+@csrf_exempt
 def user_logout(request):
     username = json.loads(request.body).get("username")
     try:
