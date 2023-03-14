@@ -228,6 +228,76 @@ def twitter_server_flow_redeem_and_login(request):
                 else:
                     return JsonResponse({"code": 403, "msg": "authentication failed"})
                 
+# DropBox login - return info (server-flow)
+@require_http_methods(['GET'])
+def dropbox_server_flow_info(request):
+    options = {
+        "response_type": 'code',
+        "client_id": "2ow6y8pdnzjdxuj",
+        "redirect_uri": 'http://localhost:8080/login',
+    }
+    return JsonResponse({"code": 200, "options": options})
+
+
+# DropBox login - redeem access token and user login (server-flow)
+@require_http_methods(['POST'])
+@csrf_exempt
+def dropbox_server_flow_redeem_and_login(request):
+    try:
+        code = json.loads(request.body).get("code")
+    except:
+        raise Http404("you need to provide code in your post request")
+
+    data = dict()
+    data['client_id'] = "2ow6y8pdnzjdxuj"
+    data['client_secret'] = "9o7l2nqmnawmct9"
+    data['redirect_uri'] = "http://localhost:8080/login"
+    data['grant_type'] = "authorization_code"
+    data['code'] = code
+
+    res = requests.post('https://api.dropboxapi.com/oauth2/token',data)
+
+    # print(res.status_code,res.text)
+
+    if res.status_code != 200:
+        return HttpResponse("Something went wrong , please try to login again",status=404)
+
+    data = res.json()
+    access_token = data["access_token"]
+    userInfoRes = requests.post('https://api.dropboxapi.com/2/users/get_current_account',headers={'Authorization':'Bearer '+access_token})
+
+    if userInfoRes.status_code != 200:
+            return JsonResponse({"code": 403, "msg": "authentication failed"})
+    else:
+        userInfo = userInfoRes.json()
+        print(userInfo)
+        username = userInfo['email'] + '(Dropbox)'
+        password = access_token
+        try:
+            user = User.objects.get(username=username)
+            user.set_password(password)
+            user.save()
+            auth_user = authenticate(request, username=username, password=password)
+            if auth_user is not None:
+                login(request, auth_user)
+                userState = UserStatus.objects.get(username=username)
+                userState.isLoggedIn = True
+                userState.save()
+                return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": user.username, "token": access_token})
+            else:
+                return JsonResponse({"code": 403, "msg": "authentication failed"})
+        except User.DoesNotExist:
+            newUser = User.objects.create_user(username, '', password)
+            auth_new_user = authenticate(request, username=username, password=password)
+            if auth_new_user is not None:
+                new_balance = Balance.objects.create(username = username, current_balance = 150)
+                new_balnce_record = BalanceRecord.objects.create(username = username, balance_change = 150, change_reason = 'account created', change_date = timezone.now(), balance = new_balance)
+                login(request, auth_new_user)
+                newUserState = UserStatus.objects.create(username = username, isLoggedIn = True)
+                return JsonResponse({"code": 200, "msg": 'authentication succeeded', "username": newUser.username, "token": access_token})
+            else:
+                return JsonResponse({"code": 403, "msg": "authentication failed"})
+                
 # User logout
 @require_http_methods(['POST'])
 @csrf_exempt
