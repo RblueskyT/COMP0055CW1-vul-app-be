@@ -16,6 +16,10 @@ urlpatterns = [
     path('twitter_server_flow_info', views.twitter_server_flow_info, name='twitter_server_flow_info'),
     # /login/twitter_server_flow_redeem_and_login/
     path('twitter_server_flow_redeem_and_login', views.twitter_server_flow_redeem_and_login, name='twitter_server_flow_redeem_and_login'),
+    # /login/dropbox_server_flow_info/
+    path('dropbox_server_flow_info', views.dropbox_server_flow_info, name='dropbox_server_flow_info'),
+    # /login/dropbox_server_flow_redeem_and_login/
+    path('dropbox_server_flow_redeem_and_login', views.dropbox_server_flow_redeem_and_login, name='dropbox_server_flow_redeem_and_login'),
     # /login/user_logout/
     path('user_logout', views.user_logout, name='user_logout'),
     # /login/check_user_status/
