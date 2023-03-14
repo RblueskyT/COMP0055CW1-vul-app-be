@@ -23,7 +23,7 @@ def tweet(request):
         return JsonResponse({"code": 403, "msg": "authentication failed"})
     if userState.isLoggedIn:
         text = json.loads(request.body).get("text")
-        accessToken = data.get("token")
+        accessToken = json.loads(request.body).get("token")
         data = { "text": text }
         res = requests.post('https://api.twitter.com/2/tweets',json=data,headers={'Authorization':'Bearer '+accessToken,"Content-Type": "application/json"})
         if res.status_code == 201:
